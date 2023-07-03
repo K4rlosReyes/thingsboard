@@ -1,11 +1,14 @@
 import logging
 import sqlite3
 from datetime import datetime
-
+from dotenv import load_dotenv
 from tb_rest_client.rest_client_pe import RestClientPE
 from tb_rest_client.rest import ApiException
+import os
 
 import time
+
+load_dotenv()
 
 logging.basicConfig(
     level=logging.DEBUG,
@@ -17,11 +20,49 @@ logging.basicConfig(
 url = "https://thingsboard.cloud"
 
 # Default Tenant Administrator credentials
-username = "pfernandez@mat.upv.es"
-password = "123456"
+username = os.getenv("USERNAME")
+password = os.getenv("PASSWORD")
 customer_id = "89ffe890-0e38-11ec-a4b0-6fb4a09a8a57"
 
-device_labels = ["CUD-01", "CUD-02"]
+# Agregar todos los dispositivos que se deseen descargar sus datos
+device_labels = [
+    "CUD-01",
+    "CUD-02",
+]
+
+
+def create_tables(conn, device_labels):
+    cursor = conn.cursor()
+    with RestClientPE(base_url=url) as rest_client:
+        try:
+            # Authenticate with credentials
+            rest_client.login(username=username, password=password)
+
+            devices = rest_client.get_customer_devices(
+                customer_id=customer_id, page_size=10, page=0
+            )
+
+            for device in devices.data:
+                if device.label in device_labels:
+                    device_keys = ["Temperatura", "CO2", "Humedad", "Dispositivos"]
+
+                    for key in device_keys:
+                        table_name = f"telemetry_{key}"
+                        cursor.execute(
+                            f"""
+                            CREATE TABLE IF NOT EXISTS {table_name} (
+                                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                                device_name TEXT,
+                                timestamp TIMESTAMP,
+                                value FLOAT
+                            )
+                        """
+                        )
+
+            conn.commit()
+
+        except ApiException as e:
+            logging.exception(e)
 
 
 def get_filtered_devices(rest_client, devices, labels):
@@ -38,28 +79,23 @@ def save_telemetry_data(conn, telemetry_data):
     cursor = conn.cursor()
     for device_name, telemetry in telemetry_data.items():
         for ts_key, ts_values in telemetry.items():
-            table_name = f"telemetry_{device_name}_{ts_key}"
+            table_name = f"telemetry_{ts_key}"
 
-            # TODO: Cambiar el timestamp al timestamp de envío de información de los dispositivos
-            timestamp = datetime.fromtimestamp(int(ts_key) // 1000).strftime(
-                "%Y-%m-%d %H:%M:%S"
-            )
             for key_value in ts_values:
-                key = key_value["key"]
                 value = key_value["value"]
+                timestamp = key_value["ts"]
                 cursor.execute(
-                    f"INSERT INTO {table_name} (timestamp, value) VALUES (?, ?)",
-                    (timestamp, value),
-                )
-                cursor.execute(
-                    "INSERT INTO telemetry_data (device_name, timestamp, key, value) VALUES (?, ?, ?, ?)",
-                    (device_name, timestamp, key, value),
+                    f"INSERT INTO {table_name} (device_name, timestamp, value) VALUES (?, ?, ?)",
+                    (device_name, timestamp, value),
                 )
     conn.commit()
 
 
 # Create a database connection
 conn = sqlite3.connect("telemetry.db")
+
+# Create tables for each parameter of each device
+create_tables(conn, device_labels)
 
 # Creating the REST client object with context manager to get auto token refresh
 with RestClientPE(base_url=url) as rest_client:
@@ -80,7 +116,8 @@ with RestClientPE(base_url=url) as rest_client:
             for device in filtered_devices:
                 device_id = device.id.id
                 device_details = rest_client.get_device_by_id(device_id)
-                device_keys = ["Temperatura", "CO2", "Humedad", "Dispositivos"]
+                # device_keys = rest_client.get_timeseries_keys(device_id)
+                device_keys = "Temperatura,CO2,Humedad,Dispositivos"
 
                 logging.info("Getting telemetry")
                 telemetry = rest_client.telemetry_controller.get_timeseries_using_get(
