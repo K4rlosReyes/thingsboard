@@ -24,7 +24,7 @@ customer_id = "89ffe890-0e38-11ec-a4b0-6fb4a09a8a57"
 
 device_labels = ["CUD-01", "CUD-02"]
 
-# Crear una conexión a la base de datos
+# Creating database connection
 conn = sqlite3.connect("telemetry.db")
 cursor = conn.cursor()
 
@@ -43,6 +43,8 @@ def save_telemetry_data(telemetry_data):
     for device_name, telemetry in telemetry_data.items():
         for ts_key, ts_values in telemetry.items():
             table_name = f"telemetry_{device_name}_{ts_key}"
+
+            # TODO: Cambiar el timestamp al timestamp de envio de informacion de los dispositivos
             timestamp = datetime.fromtimestamp(int(ts_key) // 1000).strftime(
                 "%Y-%m-%d %H:%M:%S"
             )
@@ -94,12 +96,10 @@ with RestClientPE(base_url=url) as rest_client:
             save_telemetry_data(telemetry_data)
             logging.info("Telemetry Saved")
 
-            time.sleep(
-                24 * 60 * 60
-            )  # Esperar 24 horas antes de la siguiente actualización
+            time.sleep(24 * 60 * 60)  # Wating 24h until the next update
 
     except ApiException as e:
         logging.exception(e)
 
-# Cerrar la conexión a la base de datos
+# Closing database connection
 conn.close()
