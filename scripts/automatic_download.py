@@ -2,8 +2,7 @@ import logging
 import sqlite3
 from datetime import datetime
 
-# Importing models and REST client class from Professional Edition version
-from tb_rest_client.rest_client_pe import *
+from tb_rest_client.rest_client_pe import RestClientPE
 from tb_rest_client.rest import ApiException
 
 import time
@@ -24,10 +23,6 @@ customer_id = "89ffe890-0e38-11ec-a4b0-6fb4a09a8a57"
 
 device_labels = ["CUD-01", "CUD-02"]
 
-# Creating database connection
-conn = sqlite3.connect("telemetry.db")
-cursor = conn.cursor()
-
 
 def get_filtered_devices(rest_client, devices, labels):
     filtered_devices = []
@@ -39,12 +34,13 @@ def get_filtered_devices(rest_client, devices, labels):
     return filtered_devices
 
 
-def save_telemetry_data(telemetry_data):
+def save_telemetry_data(conn, telemetry_data):
+    cursor = conn.cursor()
     for device_name, telemetry in telemetry_data.items():
         for ts_key, ts_values in telemetry.items():
             table_name = f"telemetry_{device_name}_{ts_key}"
 
-            # TODO: Cambiar el timestamp al timestamp de envio de informacion de los dispositivos
+            # TODO: Cambiar el timestamp al timestamp de envío de información de los dispositivos
             timestamp = datetime.fromtimestamp(int(ts_key) // 1000).strftime(
                 "%Y-%m-%d %H:%M:%S"
             )
@@ -62,10 +58,13 @@ def save_telemetry_data(telemetry_data):
     conn.commit()
 
 
+# Create a database connection
+conn = sqlite3.connect("telemetry.db")
+
 # Creating the REST client object with context manager to get auto token refresh
 with RestClientPE(base_url=url) as rest_client:
     try:
-        # Auth with credentials
+        # Authenticate with credentials
         rest_client.login(username=username, password=password)
 
         devices = rest_client.get_customer_devices(
@@ -93,13 +92,13 @@ with RestClientPE(base_url=url) as rest_client:
                 )
                 telemetry_data[device.label] = telemetry
 
-            save_telemetry_data(telemetry_data)
+            save_telemetry_data(conn, telemetry_data)
             logging.info("Telemetry Saved")
 
-            time.sleep(24 * 60 * 60)  # Wating 24h until the next update
+            time.sleep(24 * 60 * 60)  # Wait 24 hours until the next update
 
     except ApiException as e:
         logging.exception(e)
 
-# Closing database connection
+# Close the database connection
 conn.close()
