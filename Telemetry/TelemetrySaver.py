@@ -34,7 +34,5 @@ class TelemetrySaver(object):
                     )
         self.conn.commit()
 
-        self.conn.close()
-
     def close(self) -> None:
         self.conn.close()
