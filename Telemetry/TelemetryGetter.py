@@ -51,7 +51,9 @@ class TelemetryGetter(object):
                 filtered_devices.append(device)
         return filtered_devices
 
-    def fetch_telemetry(self, devices_label: list, timeseries_key: str) -> dict:
+    def fetch_telemetry(
+        self, devices_label: list, timeseries_key: str, timestamp: str
+    ) -> dict:
         """
         Fetch telemetry data from Thingsboard
         """
@@ -89,7 +91,8 @@ class TelemetryGetter(object):
                 logging.info("Getting telemetry")
 
                 en = int(time.time()) * 1000
-                st = int(time.time()) * 1000 - 24 * 60 * 60 * 1000
+                st = timestamp
+                # st = int(time.time()) * 1000 - 24 * 60 * 60 * 1000
 
                 print(st)
                 print(en)
