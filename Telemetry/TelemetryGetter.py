@@ -103,8 +103,6 @@ class TelemetryGetter(object):
                     )
                 )
                 telemetry_data[device.label] = telemetry
-            # print(telemetry)
-            # save_telemetry_data(conn, telemetry_data)
             logging.info("Telemetry Saved")
 
         except ApiException as e:
