@@ -23,10 +23,22 @@ telgetter.set_url(url=URL)
 telgetter.set_credentials(username=USERNAME, password=PASSWORD)
 telgetter.set_customer_id(customer_id=CUSTOMER_ID)
 
+# Initializing saver object
+saver = TelemetrySaver(database_address="database_test.db", table_name="telemetry")
+
+# Get last timestamp recorded
+timestamp = saver.get_timestamp()
+
 # Fetch telemetry data
-ldev = telgetter.fetch_telemetry(devices_label=DEVICE_LABELS, timeseries_key=TIMESERIES)
+ldev = telgetter.fetch_telemetry(
+    devices_label=DEVICE_LABELS, timeseries_key=TIMESERIES, timestamp=timestamp
+)
 
 # Save Telemetry data
-saver = TelemetrySaver(database_address="database_test.db", table_name="telemetry")
 saver.save_telemetry(ldev)
+
+# Update timestamp
+saver.update_timestamp()
+
+# Closing db connection
 saver.close()
