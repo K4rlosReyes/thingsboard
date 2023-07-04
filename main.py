@@ -8,6 +8,7 @@ load_dotenv()
 # ThingsBoard REST API URL
 URL = os.getenv("URL")
 
+# TODO: Comment every variable properly
 # Default Tenant Administrator credentials
 USERNAME = os.getenv("USERNAME")
 PASSWORD = os.getenv("PASSWORD")
