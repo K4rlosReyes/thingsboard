@@ -59,7 +59,7 @@ class TelemetrySaver(object):
         timestamp = self.ts_cursor.fetchone()
         return timestamp
 
-    def update_timestamp(self):
+    def update_timestamp(self) -> None:
         current_timestamp = datetime.datetime.now()
 
         # Update timestamp value
@@ -70,3 +70,4 @@ class TelemetrySaver(object):
 
     def close(self) -> None:
         self.conn.close()
+        self.ts_conn.close()
