@@ -1,15 +1,19 @@
 from Telemetry.TelemetryGetter import TelemetryGetter
 from Telemetry.TelemetrySaver import TelemetrySaver
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
 
 # ThingsBoard REST API URL
-URL = "https://thingsboard.cloud"
+URL = os.getenv("URL")
 
 # Default Tenant Administrator credentials
-USERNAME = "pfernandez@mat.upv.es"
-PASSWORD = "123456"
-CUSTOMER_ID = "89ffe890-0e38-11ec-a4b0-6fb4a09a8a57"
-TIMESERIES = "Temperatura,CO2,Humedad,Dispositivos"
-DEVICE_LABELS = ["CUD-01", "CUD-02"]
+USERNAME = os.getenv("USERNAME")
+PASSWORD = os.getenv("PASSWORD")
+CUSTOMER_ID = os.getenv("CUSTOMER_ID")
+TIMESERIES = os.getenv("TIMESERIES")
+DEVICE_LABELS = os.getenv("DEVICE_LABELS")
 
 
 # configure the module
