@@ -30,15 +30,12 @@ saver = TelemetrySaver(database_address="database_test.db", table_name="telemetr
 timestamp = saver.get_timestamp()
 
 # Fetch telemetry data
-ldev = telgetter.fetch_telemetry(
+(ldev, ts) = telgetter.fetch_telemetry(
     devices_label=DEVICE_LABELS, timeseries_key=TIMESERIES, timestamp=timestamp
 )
 
 # Save Telemetry data
-saver.save_telemetry(ldev)
-
-# Update timestamp
-saver.update_timestamp()
+saver.save_telemetry(ldev, ts)
 
 # Closing db connection
 saver.close()

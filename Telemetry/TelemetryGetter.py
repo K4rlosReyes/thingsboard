@@ -52,8 +52,8 @@ class TelemetryGetter(object):
         return filtered_devices
 
     def fetch_telemetry(
-        self, devices_label: list, timeseries_key: str, timestamp: str
-    ) -> dict:
+        self, devices_label: list, timeseries_key: str, timestamp: int
+    ):
         """
         Fetch telemetry data from Thingsboard
         """
@@ -82,7 +82,7 @@ class TelemetryGetter(object):
             logging.info("Devices: \n%r", len(filtered_devices))
 
             telemetry_data = {}
-
+            t = int(time.time()) * 1000
             for device in filtered_devices:
                 device_id = device.id.id
                 device_details = self.rest_client.get_device_by_id(device_id)
@@ -96,6 +96,7 @@ class TelemetryGetter(object):
 
                 print(st)
                 print(en)
+
                 telemetry = (
                     self.rest_client.telemetry_controller.get_timeseries_using_get(
                         "DEVICE",
@@ -111,4 +112,4 @@ class TelemetryGetter(object):
         except ApiException as e:
             logging.exception(e)
 
-        return telemetry_data
+        return (telemetry_data,t)
