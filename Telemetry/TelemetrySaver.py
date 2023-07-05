@@ -2,6 +2,7 @@ import sqlite3
 import datetime
 import time
 
+
 class TelemetrySaver(object):
     def __init__(self, database_address: str, table_name: str) -> None:
         # Main Database Info
@@ -35,7 +36,7 @@ class TelemetrySaver(object):
     def save_telemetry(self, telemetry_data: dict, timestamp: int) -> None:
         # Create a database connection
         for device_name, telemetry in telemetry_data.items():
-            #print("--------------------------------------")
+            # print("--------------------------------------")
             for timeseries_key, ts_values in telemetry.items():
                 for key_value in ts_values:
                     time_stamp = key_value["ts"]
@@ -54,12 +55,16 @@ class TelemetrySaver(object):
 
     def get_timestamp(self) -> int:
         current_timestamp = int(time.time()) * 1000
-        self.cursor.execute(
-            f"SELECT COALESCE(timestamp, ?) FROM {self.ts_table_name}",
-            (current_timestamp,),
-        )
+        self.cursor.execute(f"SELECT timestamp FROM {self.ts_table_name}")
         timestamp = self.cursor.fetchone()
-        return timestamp
+
+        if timestamp is not None:
+            timestamp_int = int(timestamp[0])
+            print(timestamp_int)
+            return timestamp_int
+        else:
+            # Si no se encontró ningún resultado, se puede devolver el valor actual
+            return current_timestamp
 
     def close(self) -> None:
         self.conn.close()
