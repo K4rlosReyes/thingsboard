@@ -1,27 +1,41 @@
 from Telemetry.TelemetryGetter import TelemetryGetter
 from Telemetry.TelemetrySaver import TelemetrySaver
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
 
 # ThingsBoard REST API URL
-URL = "https://thingsboard.cloud"
+URL = os.getenv("URL")
 
+# TODO: Comment every variable properly
 # Default Tenant Administrator credentials
-USERNAME = "pfernandez@mat.upv.es"
-PASSWORD = "123456"
-CUSTOMER_ID = "89ffe890-0e38-11ec-a4b0-6fb4a09a8a57"
-TIMESERIES = 'CO2'
-DEVICE_LABELS = ["CUD-01", "CUD-02"]
+USERNAME = os.getenv("USERNAME")
+PASSWORD = os.getenv("PASSWORD")
+CUSTOMER_ID = os.getenv("CUSTOMER_ID")
+TIMESERIES = os.getenv("TIMESERIES")
+DEVICE_LABELS = os.getenv("DEVICE_LABELS")
 
 
 # configure the module
 telgetter = TelemetryGetter()
 telgetter.set_url(url=URL)
 telgetter.set_credentials(username=USERNAME, password=PASSWORD)
-telgetter.set_customer_id( customer_id=CUSTOMER_ID )
+telgetter.set_customer_id(customer_id=CUSTOMER_ID)
+
+# Initializing saver object
+saver = TelemetrySaver(database_address="database_test.db", table_name="telemetry")
+
+# Get last timestamp recorded
+timestamp = saver.get_timestamp()
 
 # Fetch telemetry data
-ldev = telgetter.fetch_telemetry( devices_label=DEVICE_LABELS, timeseries_key=TIMESERIES )
+(ldev, ts) = telgetter.fetch_telemetry(
+    devices_label=DEVICE_LABELS, timeseries_key=TIMESERIES, timestamp=timestamp
+)
 
 # Save Telemetry data
-saver = TelemetrySaver( database_address='database_test.db', table_name='telemetry' )
-saver.save_telemetry( ldev )
+saver.save_telemetry(ldev, ts)
+
+# Closing db connection
 saver.close()
