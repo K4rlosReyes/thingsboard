@@ -15,7 +15,7 @@ class TelemetrySaver(object):
             CREATE TABLE IF NOT EXISTS {self.table_name} (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
 				device_name TEXT, 
-                timestamp TIMESTAMP,
+                timestamp INT,
 				key TEXT,
                 value FLOAT
             )
@@ -28,7 +28,7 @@ class TelemetrySaver(object):
             f"""
 			 CREATE TABLE IF NOT EXISTS {self.ts_table_name} (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                timestamp TIMESTAMP
+                timestamp INT
 			 )
              """
         )
