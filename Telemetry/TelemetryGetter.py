@@ -7,6 +7,7 @@ from tb_rest_client.rest import ApiException
 import time
 
 logging.basicConfig(
+    filename="server_logs.log",
     level=logging.DEBUG,
     format="%(asctime)s - %(levelname)s - %(module)s - %(lineno)d - %(message)s",
     datefmt="%Y-%m-%d %H:%M:%S",
@@ -96,22 +97,24 @@ class TelemetryGetter(object):
 
                 logging.info(f"Getting telemetry from device {device.label}")
 
-                telemetry = self.rest_client.telemetry_controller.get_timeseries_using_get(
+                telemetry = (
+                    self.rest_client.telemetry_controller.get_timeseries_using_get(
                         "DEVICE",
                         device_id,
                         keys=device_keys,
                         start_ts=st,
                         end_ts=t,
                     )
-                
-                device_keys = device_keys.split(',')
+                )
+
+                device_keys = device_keys.split(",")
                 for key in device_keys:
                     try:
                         l = len(telemetry.get(key))
                     except:
                         l = 0
-                    logging.info( f"Received {l} samples of {key}" )
-                
+                    logging.info(f"Received {l} samples of {key}")
+
                 telemetry_data[device.label] = telemetry
 
         except ApiException as e:
