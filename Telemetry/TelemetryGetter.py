@@ -75,35 +75,44 @@ class TelemetryGetter(object):
                     break
                 page += 1
 
+            # filter device by label
             filtered_devices = self.__filter_devices(all_devices, devices_label)
 
             telemetry_data = {}
+
+            # specify interval time
             t = int(time.time()) * 1000
+            st = timestamp
+            # st = int(time.time()) * 1000 - 24 * 60 * 60 * 1000
+
+            logging.info(f"st: {st}, {type(st)}")
+            logging.info(f"en: {t}, {type(t)}")
+
+            logging.info(f"Getting telemetry from {len(filtered_devices)} devices")
             for device in filtered_devices:
                 device_id = device.id.id
                 device_details = self.rest_client.get_device_by_id(device_id)
                 device_keys = timeseries_key
 
-                logging.info("Getting telemetry")
+                logging.info(f"Getting telemetry from device {device.label}")
 
-                st = timestamp
-                # st = int(time.time()) * 1000 - 24 * 60 * 60 * 1000
-
-                logging.info(f"st: {st}, {type(st)}")
-                logging.info(f"en: {t}, {type(t)}")
-
-                telemetry = (
-                    self.rest_client.telemetry_controller.get_timeseries_using_get(
+                telemetry = self.rest_client.telemetry_controller.get_timeseries_using_get(
                         "DEVICE",
                         device_id,
                         keys=device_keys,
                         start_ts=st,
                         end_ts=t,
                     )
-                )
-                print(telemetry)
+                
+                device_keys = device_keys.split(',')
+                for key in device_keys:
+                    try:
+                        l = len(telemetry.get(key))
+                    except:
+                        l = 0
+                    logging.info( f"Received {l} samples of {key}" )
+                
                 telemetry_data[device.label] = telemetry
-            logging.info("Telemetry Saved")
 
         except ApiException as e:
             logging.exception(e)

@@ -34,37 +34,57 @@ class TelemetrySaver(object):
         )
 
     def save_telemetry(self, telemetry_data: dict, timestamp: int) -> None:
-        # Create a database connection
+        """
+        Save telemetry stored on telemetry_data and update last timestamp.
+        """
+        
+        # Take the telemetry info for each device
         for device_name, telemetry in telemetry_data.items():
-            # print("--------------------------------------")
+            
+            # Take one by one each time serie. 
             for timeseries_key, ts_values in telemetry.items():
+
+                # For each value in time series
                 for key_value in ts_values:
                     time_stamp = key_value["ts"]
                     value = key_value["value"]
-
+                    # insert an entry in the table 
                     self.cursor.execute(
                         f"INSERT INTO {self.table_name} (device_name, timestamp, key, value) VALUES (?, ?, ?, ?)",
                         (device_name, time_stamp, timeseries_key, value),
                     )
 
-        # Update timestamp value
+        # Update last timestamp value
         self.cursor.execute(
-            f"UPDATE {self.ts_table_name} SET timestamp = ?", (timestamp,)
+            f"UPDATE {self.ts_table_name} SET timestamp = ? WHERE id = 1", (timestamp,)
         )
         self.conn.commit()
 
-    def get_timestamp(self) -> int:
-        current_timestamp = int(time.time()) * 1000
-        self.cursor.execute(f"SELECT timestamp FROM {self.ts_table_name}")
+    def get_last_timestamp(self) -> int:
+        """
+        Return timestamp for the last Telemetry save
+        """
+
+        # Default value for timestamp
+        last_timestamp = int(time.time()) * 1000 - 24 * 60 * 60 * 1000
+        
+        # get last timestamp stored in db
+        self.cursor.execute(f"SELECT timestamp FROM {self.ts_table_name} WHERE id = 1")
         timestamp = self.cursor.fetchone()
 
         if timestamp is not None:
-            timestamp_int = int(timestamp[0])
-            print(timestamp_int)
-            return timestamp_int
+            last_timestamp = int(timestamp[0])
         else:
-            # Si no se encontró ningún resultado, se puede devolver el valor actual
-            return current_timestamp
+            # Si no se encontró ningún valor se agrega uno con el valor por default
+            self.cursor.execute(
+                f"INSERT INTO {self.ts_table_name} (id, timestamp) VALUES (1, ?)",
+                (last_timestamp,),
+            )
+
+        return last_timestamp
 
     def close(self) -> None:
+        """
+        Close SQLite connection
+        """
         self.conn.close()
