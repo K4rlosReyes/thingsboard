@@ -13,6 +13,4 @@ The only step to get the project running is to execute the run.sh script:
 ```
 
 ## TODOs
-
-- [ ] Declare database name as ENV variable.
 - [ ] Write unit tests.
