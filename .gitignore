@@ -1,3 +1,9 @@
+# VSCode
+.vscode
+
+# Database
+*.db
+
 environment/*
 environment/
 environment
