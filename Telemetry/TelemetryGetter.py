@@ -7,7 +7,7 @@ from tb_rest_client.rest import ApiException
 import time
 
 logging.basicConfig(
-    filename="server_logs.log",
+    filename="logs/server_logs.log",
     level=logging.DEBUG,
     format="%(asctime)s - %(levelname)s - %(module)s - %(lineno)d - %(message)s",
     datefmt="%Y-%m-%d %H:%M:%S",
