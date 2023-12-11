@@ -47,23 +47,35 @@ class TelemetryGetter(object):
         filtered_devices = []
         for device in all_devices:
             # device_details = self.rest_client.get_device_by_id(device.id.id)
-            device_label = self.rest_client.get_device_by_id(device.id.id).label
-            if device_label in devices_labels:
-                filtered_devices.append(device)
+            try:
+                device_label = self.rest_client.get_device_by_id(device.id.id).label
+                if device_label in devices_labels:
+                    filtered_devices.append(device)
+            except ApiException as e:
+                logging.exception(e)
+
         return filtered_devices
 
     def fetch_telemetry(self, devices_label: list, timeseries_key: str, timestamp: int):
         """
         Fetch telemetry data from Thingsboard
+        
+        Return (None, None) in case of error
         """
         self.rest_client = RestClientPE(base_url=self.url)
         try:
             # Authenticate with credentials
             self.rest_client.login(username=self.username, password=self.password)
+        except ApiException as e:
+            logging.exception(e)
+            print("Login error")
+            return (None,None)
 
-            # Get customer devices
-            page = 0
-            all_devices = list()
+
+		# Get customer devices
+        page = 0
+        all_devices = list()
+        try:
             while True:
                 devices = self.rest_client.get_customer_devices(
                     customer_id=self.customer_id, page_size=10, page=page
@@ -75,49 +87,49 @@ class TelemetryGetter(object):
                 if devices.has_next == False:
                     break
                 page += 1
-
+        except ApiException as e:
+            logging.exception(e)
+            print("error getting customer devices")
+            return (None,None)
+            
             # filter device by label
-            filtered_devices = self.__filter_devices(all_devices, devices_label)
+        filtered_devices = self.__filter_devices(all_devices, devices_label)
+        telemetry_data = {}
 
-            telemetry_data = {}
+        # specify interval time
+        t = int(time.time()) * 1000
+        st = timestamp
+        # st = int(time.time()) * 1000 - 24 * 60 * 60 * 1000
 
-            # specify interval time
-            t = int(time.time()) * 1000
-            st = timestamp
-            # st = int(time.time()) * 1000 - 24 * 60 * 60 * 1000
+        logging.info(f"st: {st}, {type(st)}")
+        logging.info(f"en: {t}, {type(t)}")
 
-            logging.info(f"st: {st}, {type(st)}")
-            logging.info(f"en: {t}, {type(t)}")
-
-            logging.info(f"Getting telemetry from {len(filtered_devices)} devices")
-            for device in filtered_devices:
-                device_id = device.id.id
-                device_details = self.rest_client.get_device_by_id(device_id)
-                device_keys = timeseries_key
-
-                logging.info(f"Getting telemetry from device {device.label}")
-
-                telemetry = (
-                    self.rest_client.telemetry_controller.get_timeseries_using_get(
+        logging.info(f"Getting telemetry from {len(filtered_devices)} devices")
+        for device in filtered_devices:
+            device_id = device.id.id
+            device_details = self.rest_client.get_device_by_id(device_id)
+            device_keys = timeseries_key
+            device_keys = device_keys.split(",")            
+            logging.info(f"Getting telemetry from device {device.label}")
+            try:
+                telemetry = (self.rest_client.telemetry_controller.get_timeseries_using_get(
                         "DEVICE",
                         device_id,
-                        keys=device_keys,
+                        keys=timeseries_key,
                         start_ts=st,
                         end_ts=t,
-                    )
-                )
-
-                device_keys = device_keys.split(",")
+                    ))
+                
                 for key in device_keys:
                     try:
                         l = len(telemetry.get(key))
                     except:
                         l = 0
                     logging.info(f"Received {l} samples of {key}")
-
+                        
                 telemetry_data[device.label] = telemetry
-
-        except ApiException as e:
-            logging.exception(e)
+            except ApiException as e:
+                print("get_timeseries_using_get error")
+                logging.exception( e )
 
         return (telemetry_data, t)

@@ -1,3 +1,4 @@
+import Telemetry.TelemetryGetter
 from Telemetry.TelemetryGetter import TelemetryGetter
 from Telemetry.TelemetrySaver import TelemetrySaver
 from dotenv import load_dotenv
@@ -29,14 +30,15 @@ saver = TelemetrySaver(database_address=DATABASE_ADDRESS, table_name="telemetry"
 
 # Get last timestamp recorded
 timestamp = saver.get_last_timestamp()
-
+print( f"saver timestamp: {timestamp}" )
 # Fetch telemetry data
 (ldev, ts) = telgetter.fetch_telemetry(
     devices_label=DEVICE_LABELS, timeseries_key=TIMESERIES, timestamp=timestamp
 )
-
-# Save Telemetry data
-saver.save_telemetry(ldev, ts)
-
-# Closing db connection
-saver.close()
+if ldev != None and ts != None:
+	# Save Telemetry data
+	saver.save_telemetry(ldev, ts)
+	# Closing db connection
+	saver.close()
+else:
+	print("No data acquired")
