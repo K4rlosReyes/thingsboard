@@ -40,5 +40,6 @@ if ldev != None and ts != None:
 	saver.save_telemetry(ldev, ts)
 	# Closing db connection
 	saver.close()
+	print("Data saved!!!")
 else:
-	print("No data acquired")
+	print("No data acquired!!!")
